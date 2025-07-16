@@ -1,0 +1,17 @@
+# Ignore Python virtual environment
+venv/
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment variable files
+.env
+
+# VS Code settings (optional)
+.vscode/
+
+# MacOS / Windows trash files
+.DS_Store
+Thumbs.db
