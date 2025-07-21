@@ -7,9 +7,10 @@ class Goal(Base):
     __tablename__ = "goals"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
     goal_text = Column(String, nullable=False)
+    target = Column(String, nullable=False)
     month = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", backref="goals")

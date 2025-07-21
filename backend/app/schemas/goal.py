@@ -3,6 +3,7 @@ from datetime import datetime
 
 class GoalBase(BaseModel):
     goal_text: str
+    target: str
     month: str  # e.g. "2025-07"
 
 class GoalCreate(GoalBase):
@@ -10,6 +11,7 @@ class GoalCreate(GoalBase):
 
 class GoalOut(GoalBase):
     id: int
+    user_id: int
     created_at: datetime
 
     class Config:
