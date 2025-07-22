@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";  // Import useNavigate
-import { register } from "../services/auth"; // Import register service
+import { useNavigate } from "react-router-dom";  
+import { register } from "../services/auth"; 
 
 function Register() {
   const [new_name, setNewName] = useState("");  // New state for name
@@ -10,8 +10,8 @@ function Register() {
   const [message, setMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // State for loading
 
-  // For redirecting after successful registration
   const navigate = useNavigate();
 
   // Handle password validation
@@ -40,10 +40,12 @@ function Register() {
     const isValid = handleCheckPass();
     if (!isValid) return;
 
+    setIsLoading(true); // Show loading spinner
+
     try {
       const response = await register(new_name, new_email, new_pass); // Call register function from auth.js
-      localStorage.setItem("token", response.data.access_token); // Store token in localStorage (if needed)
-      console.log("Registration successful", response.data); // Log success
+      localStorage.setItem("token", response.data.access_token); // Store token in localStorage
+      console.log("Registration successful", response.data);
 
       // Redirect to the login page after successful registration
       navigate("/login");  // Redirect to /login route
@@ -52,6 +54,8 @@ function Register() {
       setMessage("Registration failed! Please try again.");
       setIsModalOpen(true);
       setModalType("error");
+    } finally {
+      setIsLoading(false); // Hide loading spinner
     }
   };
 
@@ -122,8 +126,9 @@ function Register() {
         <button
           className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
           onClick={handleSubmit}
+          disabled={isLoading}  // Disable button while loading
         >
-          SignUp
+          {isLoading ? "Signing Up..." : "SignUp"} {/* Show loading text */}
         </button>
 
         {/* Modal for success/error message */}
