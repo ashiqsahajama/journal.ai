@@ -1,13 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";  // Import useNavigate
 import { register } from "../services/auth"; // Import register service
 
 function Register() {
+  const [new_name, setNewName] = useState("");  // New state for name
   const [new_email, setNewEmail] = useState("");
   const [new_pass, setNewPass] = useState("");
   const [reenter_pass, setReenterPass] = useState("");
   const [message, setMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState("");
+
+  // For redirecting after successful registration
+  const navigate = useNavigate();
 
   // Handle password validation
   const handleCheckPass = () => {
@@ -36,11 +41,12 @@ function Register() {
     if (!isValid) return;
 
     try {
-      const response = await register(new_email, new_pass); // Call register function from auth.js
+      const response = await register(new_name, new_email, new_pass); // Call register function from auth.js
       localStorage.setItem("token", response.data.access_token); // Store token in localStorage (if needed)
       console.log("Registration successful", response.data); // Log success
-      // Redirect user to another page or show success
-      // For example, navigate to login page
+
+      // Redirect to the login page after successful registration
+      navigate("/login");  // Redirect to /login route
     } catch (error) {
       console.error("Registration error", error);
       setMessage("Registration failed! Please try again.");
@@ -74,6 +80,17 @@ function Register() {
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6 mt-2">Register</h2>
 
+        {/* Name input */}
+        <input
+          type="text"
+          placeholder="Full Name"
+          className="w-full px-3 py-2 mb-3 border rounded-md focus:outline-none focus:ring"
+          value={new_name}
+          onChange={(e) => setNewName(e.target.value)}
+          required
+        />
+
+        {/* Email input */}
         <input
           type="email"
           placeholder="Email"
@@ -83,6 +100,7 @@ function Register() {
           required
         />
 
+        {/* Password input */}
         <input
           type="password"
           placeholder="Password"
@@ -91,6 +109,7 @@ function Register() {
           onChange={(e) => setNewPass(e.target.value)}
         />
 
+        {/* Confirm password input */}
         <input
           type="password"
           placeholder="Enter Password Again"
@@ -99,6 +118,7 @@ function Register() {
           onChange={(e) => setReenterPass(e.target.value)}
         />
 
+        {/* Submit button */}
         <button
           className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
           onClick={handleSubmit}

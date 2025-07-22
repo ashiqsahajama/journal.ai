@@ -105,6 +105,7 @@ function Journal() {
                         // font-semibold for bold text, bg-green-600 for background.
                         // hover/focus styles for interactivity, transition for smooth effects.
                         className="mt-4 w-full py-3 px-4 rounded-md text-white font-semibold bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-300 ease-in-out"
+                        onClick={handleSubmit}
                     >
                         Save Entry
                     </button>
