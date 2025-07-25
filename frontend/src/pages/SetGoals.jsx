@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";  // For navigation after goal su
 import { postMonthlyGoal } from "../services/goals";  
 
 function SetGoals() {
-  const [goals, setGoals] = useState([{ goalText: "", goalMonth: "" }]);  // Store multiple goals
+  const [goals, setGoals] = useState([{ goal_text: "", month: "" }]);  // Store multiple goals
   const [errorMessage, setErrorMessage] = useState("");  // For error messages
   const [isLoading, setIsLoading] = useState(false);  // For loading state
   const navigate = useNavigate();  // Use navigate to go to another page after success
@@ -17,14 +17,14 @@ function SetGoals() {
 
   // Add a new goal
   const addGoal = () => {
-    setGoals([...goals, { goalText: "", goalMonth: "" }]);
+    setGoals([...goals, { goal_text: "", month: "" }]);
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Filter out any empty goals
-    const validGoals = goals.filter(goal => goal.goalText && goal.goalMonth);
+    const validGoals = goals.filter(goal => goal.goal_text && goal.month);
 
     if (validGoals.length === 0) {
       setErrorMessage("Please fill in at least one goal.");
@@ -36,6 +36,7 @@ function SetGoals() {
 
     try {
       for (const goal of validGoals) {
+        // console.log(goal);
         await postMonthlyGoal(goal);  // Submit each goal individually
       }
       alert("Goals submitted successfully!");  // Success message after submission
@@ -62,15 +63,15 @@ function SetGoals() {
               type="text"
               placeholder="Enter Your Goal"
               className="w-full px-3 py-2 mb-3 border rounded-md focus:outline-none focus:ring"
-              value={goal.goalText}
-              onChange={(e) => handleGoalChange(index, "goalText", e.target.value)}
+              value={goal.goal_text}
+              onChange={(e) => handleGoalChange(index, "goal_text", e.target.value)}
               required
             />
             <input
               type="month"
               className="w-full px-3 py-2 mb-3 border rounded-md focus:outline-none focus:ring"
-              value={goal.goalMonth}
-              onChange={(e) => handleGoalChange(index, "goalMonth", e.target.value)}
+              value={goal.month}
+              onChange={(e) => handleGoalChange(index, "month", e.target.value)}
               required
             />
           </div>
