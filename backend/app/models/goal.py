@@ -8,7 +8,6 @@ class Goal(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     goal_text = Column(String, nullable=False)
-    target = Column(String, nullable=False)
     month = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

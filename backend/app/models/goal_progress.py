@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date, Boolean, UniqueConstraint
+from sqlalchemy.orm import relationship 
 from datetime import datetime, timezone
 from app.database import Base
 
@@ -9,8 +9,10 @@ class GoalProgress(Base):
     id = Column(Integer, primary_key=True, index=True)
     goal_id = Column(Integer, ForeignKey("goals.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
-    progress_note = Column(String, nullable=False)
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    progress_date = Column(Date, nullable=False)
+    status = Column(Boolean, nullable=False)
+
+    __table_args__ = (UniqueConstraint('goal_id', 'progress_date', name='unique_goal_date'),)
 
     goal = relationship("Goal", backref="progress_updates")
     user = relationship("User", backref="goal_progress")
