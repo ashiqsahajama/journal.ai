@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import SetGoals from './pages/SetGoals';
 import Dashboard from './pages/Dashboard';
 import Journal from './pages/Journal';
+import GoalProgress from './pages/GoalProgress';
 import './App.css'
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
       <Route path="/register" element={<Register/>}/>
       <Route path="/setgoals" element={<SetGoals/>}/>
       <Route path="/dashboard" element={<Dashboard/>}/>
+      <Route path="/progress" element ={<GoalProgress/>}/>
     </Routes>
     </div>
   )

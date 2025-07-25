@@ -10,7 +10,7 @@ function Register() {
   const [message, setMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // State for loading
+  const [isLoading, setIsLoading] = useState(false); // For loading state
 
   const navigate = useNavigate();
 
@@ -40,7 +40,7 @@ function Register() {
     const isValid = handleCheckPass();
     if (!isValid) return;
 
-    setIsLoading(true); // Show loading spinner
+    setIsLoading(true); // Start loading spinner
 
     try {
       const response = await register(new_name, new_email, new_pass); // Call register function from auth.js
@@ -55,7 +55,7 @@ function Register() {
       setIsModalOpen(true);
       setModalType("error");
     } finally {
-      setIsLoading(false); // Hide loading spinner
+      setIsLoading(false); // End loading state
     }
   };
 
@@ -164,7 +164,3 @@ function Register() {
 }
 
 export default Register;
-
-
-
-
