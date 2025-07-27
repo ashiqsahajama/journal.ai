@@ -13,3 +13,7 @@ export const postGoalProgress = (goalProgressData) => {
 export const getGoalProgress = (goalId) => {
   return api.get(`/goal-progress/${goalId}`);
 };
+
+export const getAllGoalProgress = () => {
+  return api.get('/goals');
+};
