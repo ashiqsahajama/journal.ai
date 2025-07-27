@@ -40,7 +40,7 @@ function SetGoals() {
         await postMonthlyGoal(goal);  // Submit each goal individually
       }
       alert("Goals submitted successfully!");  // Success message after submission
-      navigate("/goal-progress");  // Redirect to Goal Progress page after success
+      navigate("/progress");  // Redirect to Goal Progress page after success
     } catch (error) {
       setErrorMessage("There was an issue submitting your goals.");
       console.error("Error submitting goals", error);

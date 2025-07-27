@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getGoalProgress, postGoalProgress } from "../services/goals"; // Import goal progress services
+import { getGoalProgress, postGoalProgress ,getAllGoalProgress} from "../services/goals"; // Import goal progress services
 import { useNavigate } from "react-router-dom"; // For navigation
 
 function GoalProgress() {
@@ -12,7 +12,8 @@ function GoalProgress() {
   useEffect(() => {
     const fetchGoals = async () => {
       try {
-        const response = await getGoalProgress();  // Fetch progress data for all goals
+        const response = await getAllGoalProgress();  // Fetch progress data for all goals
+        console.log(response);
         setGoals(response.data);
       } catch (error) {
         console.error("Error fetching goals", error);
@@ -33,19 +34,20 @@ function GoalProgress() {
       const progressData = {
         goal_id: goalId,
         progress_date: new Date().toISOString().slice(0, 10),  // Current date (YYYY-MM-DD)
-        progress: dailyProgress,  // User's progress input (Yes or No)
+        status: dailyProgress === "Yes",  // User's progress input (Yes or No)
       };
-
+      console.log("Submitting progressData:", progressData);
       await postGoalProgress(progressData);  // Submit progress data to backend
       setToastMessage("Progress updated successfully!");  // Show success toast
       setTimeout(() => setToastMessage(""), 3000);  // Hide toast after 3 seconds
 
       // Fetch updated progress
-      const response = await getGoalProgress();
+      //const response = await getGoalProgress();
+      const response = await getAllGoalProgress();
       setGoals(response.data);  // Update progress history
     } catch (error) {
       setToastMessage("Error updating progress.");  // Show error toast
-      console.error("Error updating progress", error);
+      console.error("Error updating progress", error.response.data);
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +66,7 @@ function GoalProgress() {
 
       {/* Loop through all goals */}
       {goals.map((goal) => (
-        <div key={goal.goal_id} className="mb-6">
+        <div key={goal.id} className="mb-6">
           <h4 className="text-lg font-semibold mb-2">{goal.goal_text}</h4>
 
           {/* Progress Bar (optional) */}
@@ -78,14 +80,14 @@ function GoalProgress() {
             <div className="flex justify-between mt-2">
               <button
                 className="w-full bg-green-500 text-white py-2 rounded-md mr-2 mb-2 hover:bg-green-600"
-                onClick={() => handleProgressSubmit(goal.goal_id, "Yes")}
+                onClick={() => handleProgressSubmit(goal.id, "Yes")}
                 disabled={isLoading}
               >
                 Yes
               </button>
               <button
                 className="w-full bg-red-500 text-white py-2 rounded-md ml-2 mb-2 hover:bg-red-600"
-                onClick={() => handleProgressSubmit(goal.goal_id, "No")}
+                onClick={() => handleProgressSubmit(goal.id, "No")}
                 disabled={isLoading}
               >
                 No
