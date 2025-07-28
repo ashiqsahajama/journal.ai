@@ -1,31 +1,99 @@
 import { useState, useEffect } from "react";
-import { getGoalProgress, postGoalProgress ,getAllGoalProgress} from "../services/goals"; // Import goal progress services
-import { useNavigate } from "react-router-dom"; // For navigation
+import {
+  getAllGoalProgress,
+  getGoalProgress,
+  postGoalProgress,
+} from "../services/goals";
+import { useNavigate } from "react-router-dom";
+import GoalAnalyticsModal from "./GoalAnalyticsModal"; // adjust path if needed
+
+
+// Toast UI component
+function Toast({ message, type }) {
+  if (!message) return null;
+  return (
+    <div
+      className={`p-3 text-white rounded-md mb-4 text-center transition duration-300 ${
+        type === "success" ? "bg-green-500" : "bg-red-500"
+      }`}
+    >
+      {message}
+    </div>
+  );
+}
 
 function GoalProgress() {
-  const [goals, setGoals] = useState([]);  // Store goals data
+  const [goals, setGoals] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState(""); // Toast notification state
-  const navigate = useNavigate(); // Navigation after goal update
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("success");
+  const [selectedGoal, setSelectedGoal] = useState(null);
+  const navigate = useNavigate();
 
-  // Fetch all goals when component mounts
+  const formatDate = (date) => date.toISOString().split("T")[0];
+  //const today = formatDate(new Date());
+  const today = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000)); // hardcoded to tomorrow
+
+
   useEffect(() => {
-    const fetchGoals = async () => {
+    const fetchGoalsWithProgress = async () => {
       try {
-        const response = await getAllGoalProgress();  // Fetch progress data for all goals
-        console.log(response);
-        setGoals(response.data);
+        const response = await getAllGoalProgress(); // fetch goals
+        const allGoals = response.data;
+
+        const enrichedGoals = await Promise.all(
+          allGoals.map(async (goal) => {
+            const createdAt = formatDate(new Date(goal.created_at));
+
+            // Skip goals created after today
+            if (createdAt > today) {
+              return {
+                ...goal,
+                todayStatus: "not_started",
+              };
+            }
+
+            try {
+              const progressRes = await getGoalProgress(goal.id);
+              const progressEntries = progressRes.data;
+
+              const todayProgress = progressEntries.find(
+                (entry) => entry.progress_date === today
+              );
+
+              return {
+                ...goal,
+                todayStatus:
+                  todayProgress !== undefined
+                    ? todayProgress.status // true/false
+                    : undefined, // not yet done
+              };
+            } catch (err) {
+              console.error(`Error fetching progress for goal ${goal.id}`, err);
+              return { ...goal, todayStatus: undefined };
+            }
+          })
+        );
+
+        // Filter out future-created goals
+        const visibleGoals = enrichedGoals.filter(
+          (g) => g.todayStatus !== "not_started"
+        );
+        setGoals(visibleGoals);
       } catch (error) {
         console.error("Error fetching goals", error);
+        setToastMessage("Failed to load goals.");
+        setToastType("error");
       }
     };
-    fetchGoals();
+
+    fetchGoalsWithProgress();
   }, []);
 
-  // Submit goal progress (Yes/No for each goal)
   const handleProgressSubmit = async (goalId, dailyProgress) => {
     if (!dailyProgress) {
-      alert("Please select Yes or No for today's progress.");
+      setToastMessage("Please select Yes or No for today's progress.");
+      setToastType("error");
       return;
     }
 
@@ -33,79 +101,142 @@ function GoalProgress() {
     try {
       const progressData = {
         goal_id: goalId,
-        progress_date: new Date().toISOString().slice(0, 10),  // Current date (YYYY-MM-DD)
-        status: dailyProgress === "Yes",  // User's progress input (Yes or No)
+        progress_date: today,
+        status: dailyProgress === "Yes",
       };
-      console.log("Submitting progressData:", progressData);
-      await postGoalProgress(progressData);  // Submit progress data to backend
-      setToastMessage("Progress updated successfully!");  // Show success toast
-      setTimeout(() => setToastMessage(""), 3000);  // Hide toast after 3 seconds
 
-      // Fetch updated progress
-      //const response = await getGoalProgress();
-      const response = await getAllGoalProgress();
-      setGoals(response.data);  // Update progress history
+      await postGoalProgress(progressData);
+
+      setToastMessage("Progress updated successfully!");
+      setToastType("success");
+
+      setGoals((prev) =>
+        prev.map((g) =>
+          g.id === goalId ? { ...g, todayStatus: dailyProgress === "Yes" } : g
+        )
+      );
     } catch (error) {
-      setToastMessage("Error updating progress.");  // Show error toast
-      console.error("Error updating progress", error.response.data);
+      console.error("Error updating progress", error?.response?.data || error);
+      setToastMessage("Error updating progress.");
+      setToastType("error");
     } finally {
+      setTimeout(() => setToastMessage(""), 3000);
       setIsLoading(false);
     }
   };
+  const completedCount = goals.filter((g) => g.todayStatus === true).length;
+  const notCompletedCount = goals.filter((g) => g.todayStatus === false).length;
+  const pendingCount = goals.filter((g)=>g.todayStatus === undefined).length;
+  const totalWithStatus = completedCount + notCompletedCount + pendingCount;
+  const completionRate = totalWithStatus === 0 ? 0 : Math.round((completedCount / totalWithStatus) * 100);
+
+
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-xl w-full max-w-md mx-auto">
-      <h3 className="text-xl font-semibold mb-4">Your Goals</h3>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-lg p-6">
+        <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+          🏁 Track Your Daily Goals
+        </h3>
 
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="bg-green-500 text-white p-2 rounded-md mb-4 text-center">
-          {toastMessage}
-        </div>
-      )}
+        <div className="mb-8 px-4 py-6 bg-white rounded-lg shadow-sm border border-gray-100">
+  <h4 className="text-xl font-semibold text-center text-gray-800 mb-4">
+    📈 Today's Summary
+  </h4>
 
-      {/* Loop through all goals */}
-      {goals.map((goal) => (
-        <div key={goal.id} className="mb-6">
-          <h4 className="text-lg font-semibold mb-2">{goal.goal_text}</h4>
+  <div className="flex justify-center gap-6 text-base font-medium text-gray-700 mb-4">
+    <span>
+      ✅ <span className="text-green-600 font-bold">{completedCount}</span> Completed
+    </span>
+    <span>
+      ❌ <span className="text-red-600 font-bold">{notCompletedCount}</span> Not Completed
+    </span>
+    <span>
+      ⏳ <span className="text-yellow-500 font-bold">{pendingCount}</span> Pending
+    </span>
+  </div>
 
-          {/* Progress Bar (optional) */}
-          <div className="w-full h-2 bg-gray-200 rounded-lg mb-4">
-            {/* Progress bar logic if needed */}
-          </div>
+  <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+    <div
+      className="bg-gradient-to-r from-green-400 to-green-600 h-full transition-all duration-700"
+      style={{ width: `${completionRate}%` }}
+    ></div>
+  </div>
 
-          {/* Daily Progress Input - Yes/No */}
-          <div className="mb-4">
-            <p className="font-semibold text-lg">Did you complete your goal today?</p>
-            <div className="flex justify-between mt-2">
+  <p className="text-sm text-center text-gray-600 mt-2">
+    Progress: <span className="font-semibold">{completionRate}%</span>
+  </p>
+</div>
+
+        <Toast message={toastMessage} type={toastType} />
+       
+
+
+        {goals.map((goal) => (
+          <div
+            key={goal.id}
+            className={`mb-6 p-5 rounded-lg border transition-all duration-200 ${
+              goal.todayStatus === true
+                ? "bg-green-50 border-green-200"
+                : goal.todayStatus === false
+                ? "bg-red-50 border-red-200"
+                : "bg-white border-gray-200"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-lg font-semibold text-gray-800">
+                {goal.goal_text}
+              </h4>
+
               <button
-                className="w-full bg-green-500 text-white py-2 rounded-md mr-2 mb-2 hover:bg-green-600"
-                onClick={() => handleProgressSubmit(goal.id, "Yes")}
-                disabled={isLoading}
+                onClick={() => setSelectedGoal(goal)}
+                className="text-sm text-blue-600 hover:underline"
               >
-                Yes
-              </button>
-              <button
-                className="w-full bg-red-500 text-white py-2 rounded-md ml-2 mb-2 hover:bg-red-600"
-                onClick={() => handleProgressSubmit(goal.id, "No")}
-                disabled={isLoading}
-              >
-                No
+                📊 View Chart
               </button>
             </div>
-          </div>
-        </div>
-      ))}
 
-      {/* Submit Progress Button */}
-      <div>
-        <button
-          className={`w-full p-2 text-white rounded-md mb-4 ${isLoading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'}`}
-          disabled={isLoading}
-        >
-          {isLoading ? "Submitting..." : "Submit Progress"}
-        </button>
+            {/* Status Display */}
+            {goal.todayStatus !== undefined && (
+              <p
+                className={`text-sm font-medium mb-3 ${
+                  goal.todayStatus ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                Today's status:{" "}
+                {goal.todayStatus ? "Completed ✅" : "Not Completed ❌"}
+              </p>
+            )}
+
+            {/* Buttons */}
+            {goal.todayStatus === undefined && (
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => handleProgressSubmit(goal.id, "Yes")}
+                  disabled={isLoading}
+                  className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white py-2 rounded-md hover:bg-green-600 disabled:opacity-50 transition"
+                >
+                  ✅ Yes
+                </button>
+                <button
+                  onClick={() => handleProgressSubmit(goal.id, "No")}
+                  disabled={isLoading}
+                  className="flex-1 flex items-center justify-center gap-2 bg-red-500 text-white py-2 rounded-md hover:bg-red-600 disabled:opacity-50 transition"
+                >
+                  ❌ No
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
+      {selectedGoal && (
+  <GoalAnalyticsModal
+    goalId={selectedGoal.id}
+    goalText={selectedGoal.goal_text}
+    onClose={() => setSelectedGoal(null)}
+  />
+)}
     </div>
   );
 }
