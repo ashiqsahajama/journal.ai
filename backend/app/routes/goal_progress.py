@@ -18,17 +18,6 @@ router = APIRouter(prefix="/goal-progress", tags=["Goal Progress"])
 @router.post("/", response_model=GoalProgressOut)
 def create_goal_progress(progress:GoalProgressCreate, db:Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 
-    # Check if journal entry is written for current date or not
-    journal_entry = db.query(JournalEntry).filter(
-        JournalEntry.user_id == current_user.id, 
-        cast(JournalEntry.created_at, Date) == progress.progress_date).first()
-        # cast converts created_at to Date format
-
-    if not journal_entry:
-        raise HTTPException(
-            status_code=400,
-            detail="You must submit a journal entry for this date before tracking goal progress."
-        )
     # Check if the goal exists for current user or nor
     goal = db.query(Goal).filter(Goal.id==progress.goal_id, Goal.user_id == current_user.id).first()
     if not goal:
