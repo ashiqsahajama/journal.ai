@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from datetime import date
 
+class GoalProgressUpdate(BaseModel):
+    status: bool
+
 class GoalProgressCreate(BaseModel):
     goal_id: int
     progress_date: date
