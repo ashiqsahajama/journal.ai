@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";  // For navigation after goal submission
 import { postMonthlyGoal } from "../services/goals";  
 
+
 function SetGoals() {
   const [goals, setGoals] = useState([{ goal_text: "", month: "" }]);  // Store multiple goals
   const [errorMessage, setErrorMessage] = useState("");  // For error messages
   const [isLoading, setIsLoading] = useState(false);  // For loading state
   const navigate = useNavigate();  // Use navigate to go to another page after success
+
 
   // Handle goal input change
   const handleGoalChange = (index, field, value) => {
@@ -15,10 +17,12 @@ function SetGoals() {
     setGoals(updatedGoals);
   };
 
+
   // Add a new goal
   const addGoal = () => {
     setGoals([...goals, { goal_text: "", month: "" }]);
   };
+
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -26,13 +30,16 @@ function SetGoals() {
     // Filter out any empty goals
     const validGoals = goals.filter(goal => goal.goal_text && goal.month);
 
+
     if (validGoals.length === 0) {
       setErrorMessage("Please fill in at least one goal.");
       return;
     }
 
+
     setIsLoading(true); // Start loading spinner
     setErrorMessage("");  // Clear any previous error messages
+
 
     try {
       for (const goal of validGoals) {
@@ -49,12 +56,15 @@ function SetGoals() {
     }
   };
 
+
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6 mt-2">Set Your Goals</h2>
 
+
         {errorMessage && <p className="text-red-500 text-center">{errorMessage}</p>}
+
 
         {/* Render each goal input */}
         {goals.map((goal, index) => (
@@ -77,6 +87,7 @@ function SetGoals() {
           </div>
         ))}
 
+
         {/* Add New Goal Button */}
         <button
           type="button"
@@ -85,6 +96,7 @@ function SetGoals() {
         >
           Add Another Goal
         </button>
+
 
         {/* Submit Button */}
         <button
@@ -99,4 +111,10 @@ function SetGoals() {
   );
 }
 
+
 export default SetGoals;
+
+
+
+
+

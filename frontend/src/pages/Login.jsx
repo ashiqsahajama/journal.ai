@@ -2,12 +2,14 @@ import { useState } from "react";
 import { login } from "../services/auth";  // Import login service
 import { useNavigate } from "react-router-dom";  // Import useNavigate for redirecting
 
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");  // For error handling
   const [isLoading, setIsLoading] = useState(false);  // For loading state
   const navigate = useNavigate();  // For navigation after successful login
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,6 +26,7 @@ function Login() {
       setIsLoading(false);  // End loading
     }
   };
+
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -57,4 +60,10 @@ function Login() {
   );
 }
 
+
 export default Login;
+
+
+
+
+

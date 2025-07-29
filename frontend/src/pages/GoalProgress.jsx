@@ -3,10 +3,11 @@ import {
   getAllGoalProgress,
   getGoalProgress,
   postGoalProgress,
+  deleteGoal,
+  updateGoal,
 } from "../services/goals";
 import { useNavigate } from "react-router-dom";
-import GoalAnalyticsModal from "./GoalAnalyticsModal"; // adjust path if needed
-
+import GoalAnalyticsModal from "./GoalAnalyticsModal";
 
 // Toast UI component
 function Toast({ message, type }) {
@@ -28,24 +29,24 @@ function GoalProgress() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
   const [selectedGoal, setSelectedGoal] = useState(null);
+  const [isEditing, setIsEditing] = useState(null);
+  const [editText, setEditText] = useState("");
   const navigate = useNavigate();
 
   const formatDate = (date) => date.toISOString().split("T")[0];
-  //const today = formatDate(new Date());
-  const today = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000)); // hardcoded to tomorrow
-
+  const today = formatDate(new Date()); // Use current day
+  //const today = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000)); // hardcoded to tomorrow
 
   useEffect(() => {
     const fetchGoalsWithProgress = async () => {
       try {
-        const response = await getAllGoalProgress(); // fetch goals
+        const response = await getAllGoalProgress();
         const allGoals = response.data;
 
         const enrichedGoals = await Promise.all(
           allGoals.map(async (goal) => {
             const createdAt = formatDate(new Date(goal.created_at));
 
-            // Skip goals created after today
             if (createdAt > today) {
               return {
                 ...goal,
@@ -65,8 +66,8 @@ function GoalProgress() {
                 ...goal,
                 todayStatus:
                   todayProgress !== undefined
-                    ? todayProgress.status // true/false
-                    : undefined, // not yet done
+                    ? todayProgress.status
+                    : undefined,
               };
             } catch (err) {
               console.error(`Error fetching progress for goal ${goal.id}`, err);
@@ -75,7 +76,6 @@ function GoalProgress() {
           })
         );
 
-        // Filter out future-created goals
         const visibleGoals = enrichedGoals.filter(
           (g) => g.todayStatus !== "not_started"
         );
@@ -124,13 +124,54 @@ function GoalProgress() {
       setIsLoading(false);
     }
   };
+
+  const handleDeleteGoal = async (goalId) => {
+    try {
+      await deleteGoal(goalId);
+      setGoals(goals.filter((g) => g.id !== goalId));
+      setToastMessage("Goal deleted.");
+      setToastType("success");
+    } catch (error) {
+      setToastMessage("Failed to delete goal");
+      setToastType("error");
+    }
+  };
+
+  const handleEditGoal = async (goalId) => {
+    const currentGoal = goals.find((g) => g.id === goalId);
+    if (!currentGoal) return;
+  
+    try {
+      await updateGoal(goalId, {
+        goal_text: editText,
+        month: currentGoal.month,
+      });
+  
+      setGoals((prev) =>
+        prev.map((g) =>
+          g.id === goalId ? { ...g, goal_text: editText } : g
+        )
+      );
+      setIsEditing(null);
+      setEditText("");
+      setToastMessage("Goal updated.");
+      setToastType("success");
+    } catch (error) {
+      setToastMessage("Failed to update goal.");
+      setToastType("error");
+    }
+  };
+  
+
   const completedCount = goals.filter((g) => g.todayStatus === true).length;
   const notCompletedCount = goals.filter((g) => g.todayStatus === false).length;
-  const pendingCount = goals.filter((g)=>g.todayStatus === undefined).length;
-  const totalWithStatus = completedCount + notCompletedCount + pendingCount;
-  const completionRate = totalWithStatus === 0 ? 0 : Math.round((completedCount / totalWithStatus) * 100);
-
-
+  const pendingCount = goals.filter((g) => g.todayStatus === undefined).length;
+  const totalWithStatus =
+    completedCount + notCompletedCount + pendingCount;
+  const completionRate =
+    totalWithStatus === 0
+      ? 0
+      : Math.round((completedCount / totalWithStatus) * 100);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -140,37 +181,47 @@ function GoalProgress() {
         </h3>
 
         <div className="mb-8 px-4 py-6 bg-white rounded-lg shadow-sm border border-gray-100">
-  <h4 className="text-xl font-semibold text-center text-gray-800 mb-4">
-    📈 Today's Summary
-  </h4>
+          <h4 className="text-xl font-semibold text-center text-gray-800 mb-4">
+            📈 Today's Summary
+          </h4>
 
-  <div className="flex justify-center gap-6 text-base font-medium text-gray-700 mb-4">
-    <span>
-      ✅ <span className="text-green-600 font-bold">{completedCount}</span> Completed
-    </span>
-    <span>
-      ❌ <span className="text-red-600 font-bold">{notCompletedCount}</span> Not Completed
-    </span>
-    <span>
-      ⏳ <span className="text-yellow-500 font-bold">{pendingCount}</span> Pending
-    </span>
-  </div>
+          <div className="flex justify-center gap-6 text-base font-medium text-gray-700 mb-4">
+            <span>
+              ✅{" "}
+              <span className="text-green-600 font-bold">
+                {completedCount}
+              </span>{" "}
+              Completed
+            </span>
+            <span>
+              ❌{" "}
+              <span className="text-red-600 font-bold">
+                {notCompletedCount}
+              </span>{" "}
+              Not Completed
+            </span>
+            <span>
+              ⏳{" "}
+              <span className="text-yellow-500 font-bold">
+                {pendingCount}
+              </span>{" "}
+              Pending
+            </span>
+          </div>
 
-  <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-    <div
-      className="bg-gradient-to-r from-green-400 to-green-600 h-full transition-all duration-700"
-      style={{ width: `${completionRate}%` }}
-    ></div>
-  </div>
+          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-green-400 to-green-600 h-full transition-all duration-700"
+              style={{ width: `${completionRate}%` }}
+            ></div>
+          </div>
 
-  <p className="text-sm text-center text-gray-600 mt-2">
-    Progress: <span className="font-semibold">{completionRate}%</span>
-  </p>
-</div>
+          <p className="text-sm text-center text-gray-600 mt-2">
+            Progress: <span className="font-semibold">{completionRate}%</span>
+          </p>
+        </div>
 
         <Toast message={toastMessage} type={toastType} />
-       
-
 
         {goals.map((goal) => (
           <div
@@ -184,19 +235,47 @@ function GoalProgress() {
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <h4 className="text-lg font-semibold text-gray-800">
-                {goal.goal_text}
-              </h4>
-
-              <button
-                onClick={() => setSelectedGoal(goal)}
-                className="text-sm text-blue-600 hover:underline"
-              >
-                📊 View Chart
-              </button>
+              {isEditing === goal.id ? (
+                <div className="flex flex-col w-full mb-2">
+                  <input
+                    type="text"
+                    className="border p-3 rounded text-md"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                  />
+                  <div className="flex gap-3 mt-2">
+                    <button
+                      onClick={() => handleEditGoal(goal.id)}
+                      className="bg-green-500 text-white px-4 py-2 rounded text-md"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditing(null);
+                        setEditText("");
+                      }}
+                      className="bg-gray-300 px-3 py-1 rounded text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h4 className="text-lg font-semibold text-gray-800">
+                    {goal.goal_text}
+                  </h4>
+                  <button
+                    onClick={() => setSelectedGoal(goal)}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    📊 View Chart
+                  </button>
+                </>
+              )}
             </div>
 
-            {/* Status Display */}
             {goal.todayStatus !== undefined && (
               <p
                 className={`text-sm font-medium mb-3 ${
@@ -208,7 +287,6 @@ function GoalProgress() {
               </p>
             )}
 
-            {/* Buttons */}
             {goal.todayStatus === undefined && (
               <div className="flex space-x-3">
                 <button
@@ -227,16 +305,37 @@ function GoalProgress() {
                 </button>
               </div>
             )}
+
+            {isEditing !== goal.id && (
+              <div className="flex items-center justify-end gap-4 mt-3">
+                <button
+                  onClick={() => {
+                    setIsEditing(goal.id);
+                    setEditText(goal.goal_text);
+                  }}
+                  className="text-yellow-600 text-sm hover:underline"
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteGoal(goal.id)}
+                  className="text-red-600 text-sm hover:underline"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
+
       {selectedGoal && (
-  <GoalAnalyticsModal
-    goalId={selectedGoal.id}
-    goalText={selectedGoal.goal_text}
-    onClose={() => setSelectedGoal(null)}
-  />
-)}
+        <GoalAnalyticsModal
+          goalId={selectedGoal.id}
+          goalText={selectedGoal.goal_text}
+          onClose={() => setSelectedGoal(null)}
+        />
+      )}
     </div>
   );
 }
