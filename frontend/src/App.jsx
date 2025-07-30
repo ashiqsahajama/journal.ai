@@ -5,7 +5,7 @@ import SetGoals from './pages/SetGoals';
 import Dashboard from './pages/Dashboard';
 import Journal from './pages/Journal';
 import GoalProgress from './pages/GoalProgress';
-import PrivateRoute from './components/PrivateRoute'; // ✅ make sure this is the correct path
+import PrivateRoute from './pages/PrivateRoute'; // ✅ make sure this is the correct path
 import './App.css';
 
 function App() {
