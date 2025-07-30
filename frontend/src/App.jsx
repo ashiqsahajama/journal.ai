@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import SetGoals from './pages/SetGoals';
 import Dashboard from './pages/Dashboard';
+import GoalEdit from './pages/GoalEdit';
 import Journal from './pages/Journal';
 import GoalProgress from './pages/GoalProgress';
 import PrivateRoute from './pages/PrivateRoute'; // ✅ make sure this is the correct path
@@ -21,6 +22,7 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/setgoals" element={<SetGoals />} />
+          <Route path="/goaledit" element={<GoalEdit/>}/>
           <Route path="/journal" element={<Journal />} />
           <Route path="/progress" element={<GoalProgress />} />
         </Route>

@@ -3,10 +3,7 @@ import {
   getAllGoalProgress,
   getGoalProgress,
   postGoalProgress,
-  deleteGoal,
-  updateGoal,
 } from "../services/goals";
-import { useNavigate } from "react-router-dom";
 import GoalAnalyticsModal from "./GoalAnalyticsModal";
 
 // Toast UI component
@@ -29,13 +26,9 @@ function GoalProgress() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
   const [selectedGoal, setSelectedGoal] = useState(null);
-  const [isEditing, setIsEditing] = useState(null);
-  const [editText, setEditText] = useState("");
-  const navigate = useNavigate();
 
   const formatDate = (date) => date.toISOString().split("T")[0];
-  const today = formatDate(new Date()); // Use current day
-  //const today = formatDate(new Date(Date.now() + 24 * 60 * 60 * 1000)); // hardcoded to tomorrow
+  const today = formatDate(new Date());
 
   useEffect(() => {
     const fetchGoalsWithProgress = async () => {
@@ -48,10 +41,7 @@ function GoalProgress() {
             const createdAt = formatDate(new Date(goal.created_at));
 
             if (createdAt > today) {
-              return {
-                ...goal,
-                todayStatus: "not_started",
-              };
+              return { ...goal, todayStatus: "not_started" };
             }
 
             try {
@@ -125,44 +115,6 @@ function GoalProgress() {
     }
   };
 
-  const handleDeleteGoal = async (goalId) => {
-    try {
-      await deleteGoal(goalId);
-      setGoals(goals.filter((g) => g.id !== goalId));
-      setToastMessage("Goal deleted.");
-      setToastType("success");
-    } catch (error) {
-      setToastMessage("Failed to delete goal");
-      setToastType("error");
-    }
-  };
-
-  const handleEditGoal = async (goalId) => {
-    const currentGoal = goals.find((g) => g.id === goalId);
-    if (!currentGoal) return;
-  
-    try {
-      await updateGoal(goalId, {
-        goal_text: editText,
-        month: currentGoal.month,
-      });
-  
-      setGoals((prev) =>
-        prev.map((g) =>
-          g.id === goalId ? { ...g, goal_text: editText } : g
-        )
-      );
-      setIsEditing(null);
-      setEditText("");
-      setToastMessage("Goal updated.");
-      setToastType("success");
-    } catch (error) {
-      setToastMessage("Failed to update goal.");
-      setToastType("error");
-    }
-  };
-  
-
   const completedCount = goals.filter((g) => g.todayStatus === true).length;
   const notCompletedCount = goals.filter((g) => g.todayStatus === false).length;
   const pendingCount = goals.filter((g) => g.todayStatus === undefined).length;
@@ -235,45 +187,15 @@ function GoalProgress() {
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              {isEditing === goal.id ? (
-                <div className="flex flex-col w-full mb-2">
-                  <input
-                    type="text"
-                    className="border p-3 rounded text-md"
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                  />
-                  <div className="flex gap-3 mt-2">
-                    <button
-                      onClick={() => handleEditGoal(goal.id)}
-                      className="bg-green-500 text-white px-4 py-2 rounded text-md"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsEditing(null);
-                        setEditText("");
-                      }}
-                      className="bg-gray-300 px-3 py-1 rounded text-sm"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <h4 className="text-lg font-semibold text-gray-800">
-                    {goal.goal_text}
-                  </h4>
-                  <button
-                    onClick={() => setSelectedGoal(goal)}
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    📊 View Chart
-                  </button>
-                </>
-              )}
+              <h4 className="text-lg font-semibold text-gray-800">
+                {goal.goal_text}
+              </h4>
+              <button
+                onClick={() => setSelectedGoal(goal)}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                📊 View Chart
+              </button>
             </div>
 
             {goal.todayStatus !== undefined && (
@@ -302,26 +224,6 @@ function GoalProgress() {
                   className="flex-1 flex items-center justify-center gap-2 bg-red-500 text-white py-2 rounded-md hover:bg-red-600 disabled:opacity-50 transition"
                 >
                   ❌ No
-                </button>
-              </div>
-            )}
-
-            {isEditing !== goal.id && (
-              <div className="flex items-center justify-end gap-4 mt-3">
-                <button
-                  onClick={() => {
-                    setIsEditing(goal.id);
-                    setEditText(goal.goal_text);
-                  }}
-                  className="text-yellow-600 text-sm hover:underline"
-                >
-                  ✏️ Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteGoal(goal.id)}
-                  className="text-red-600 text-sm hover:underline"
-                >
-                  🗑️ Delete
                 </button>
               </div>
             )}

@@ -1,15 +1,13 @@
 import axios from "axios";
 
-
-// Create Axios instance (api.js) to make API calls
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000", // Make sure to replace with your backend URL
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-
+// Attach token on requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -21,8 +19,20 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// ✅ Handle 401 responses
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear invalid token
+      localStorage.removeItem("token");
+
+      // Redirect to login page
+      window.location.href = "/login"; // works outside React components
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default api;
-
-
-
