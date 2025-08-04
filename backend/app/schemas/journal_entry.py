@@ -10,6 +10,11 @@ class JournalEntryBase(BaseModel):
 class JournalEntryCreate(JournalEntryBase):
     pass
 
+class JournalEntryUpdate(BaseModel):
+    text: str
+    rating: int
+    mood_tag: str 
+
 class JournalEntryOut(JournalEntryBase):
     id: int
     created_at: datetime
